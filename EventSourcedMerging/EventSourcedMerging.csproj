@@ -36,6 +36,10 @@
       <HintPath>..\packages\Ledger.11.0.0\lib\net45\Ledger.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Shouldly, Version=2.7.0.0, Culture=neutral, PublicKeyToken=6042cbcb05cbc941, processorArchitecture=MSIL">
+      <HintPath>..\packages\Shouldly.2.7.0\lib\net40\Shouldly.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -72,6 +76,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Events\UserCreatedEvent.cs" />
+    <Compile Include="Services\MergeService.cs" />
     <Compile Include="Tests.cs" />
   </ItemGroup>
   <ItemGroup>
