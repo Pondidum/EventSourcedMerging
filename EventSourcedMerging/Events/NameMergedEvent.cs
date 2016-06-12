@@ -2,7 +2,7 @@
 
 namespace EventSourcedMerging.Events
 {
-	public class NameMergedEvent : DomainEvent<int>
+	public class NameMergedEvent : DomainEvent<int>, IMergeEvent
 	{
 		public int MergeID { get; }
 		public string NewName { get; }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using EventSourcedMerging.Domain;
 using EventSourcedMerging.Events;
 using EventSourcedMerging.Services;
@@ -35,7 +36,7 @@ namespace EventSourcedMerging
 		public void When_merging()
 		{
 			var ms = new MergeService();
-			ms.Merge(_primary, _secondary);
+			var mergeID = ms.Merge(_primary, _secondary);
 
 			_primary.PushEvent(new MobilePhoneChangedEvent("0744 4444 444"));
 			_store.Save("Users", _primary);
@@ -44,6 +45,44 @@ namespace EventSourcedMerging
 				() => _primary.Name.ShouldBe("Andrew"),
 				() => _primary.Phones[PhoneType.Mobile].ShouldBe("0744 4444 444"),
 				() => _primary.Phones[PhoneType.Home].ShouldBe("01412 123 123")
+			);
+		}
+
+		[Fact]
+		public void When_undoing_a_merge()
+		{
+			var ms = new MergeService();
+			var mergeID = ms.Merge(_primary, _secondary);
+
+			_store.Save("Users", _primary);
+
+			var user = ms.UndoMerge(_store, 1, mergeID);
+			
+			var undo = user.GetUncommittedEvents().ToList();
+
+			undo.ShouldSatisfyAllConditions(
+				() => undo.OfType<NameMergeRevertedEvent>().Single().Name.ShouldBe("Andy"),
+				() => undo.OfType<MobilePhoneMergeRevertedEvent>().Single().MobileNumber.ShouldBe("0798 1234 123"),
+				() => undo.Count.ShouldBe(2)
+			);
+		}
+
+		[Fact]
+		public void When_undoing_a_merge_with_modifications_after()
+		{
+			var ms = new MergeService();
+			var mergeID = ms.Merge(_primary, _secondary);
+
+			_store.Save("Users", _primary);
+
+			var user = ms.UndoMerge(_store, 1, mergeID);
+
+			var undo = user.GetUncommittedEvents().ToList();
+
+			undo.ShouldSatisfyAllConditions(
+				() => undo.OfType<NameMergeRevertedEvent>().Single().Name.ShouldBe("Andy"),
+				() => undo.OfType<MobilePhoneMergeRevertedEvent>().Single().MobileNumber.ShouldBe("0798 1234 123"),
+				() => undo.Count.ShouldBe(2)
 			);
 		}
 	}

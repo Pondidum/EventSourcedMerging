@@ -16,6 +16,11 @@ namespace EventSourcedMerging.Domain
 			Phones = new Dictionary<PhoneType, string>();
 		}
 
+		public static User Blank()
+		{
+			return new User();
+		}
+
 		public static User Create(int id, string name)
 		{
 			var user = new User();
@@ -59,9 +64,15 @@ namespace EventSourcedMerging.Domain
 		{
 			Phones[PhoneType.Mobile] = e.MobileNumber;
 		}
-	}
 
-	namespace Events
-	{
+		private void Handle(NameMergeRevertedEvent e)
+		{
+			Name = e.Name;
+		}
+		
+		private void Handle(MobilePhoneMergeRevertedEvent e)
+		{
+			Phones[PhoneType.Mobile] = e.MobileNumber;
+		}
 	}
 }

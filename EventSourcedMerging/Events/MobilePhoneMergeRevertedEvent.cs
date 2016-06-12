@@ -2,12 +2,12 @@
 
 namespace EventSourcedMerging.Events
 {
-	public class MobilePhoneMergedEvent : DomainEvent<int>, IMergeEvent
+	public class MobilePhoneMergeRevertedEvent : DomainEvent<int>
 	{
 		public int MergeID { get; }
 		public string MobileNumber { get; }
 
-		public MobilePhoneMergedEvent(int mergeID, string mobileNumber)
+		public MobilePhoneMergeRevertedEvent(int mergeID, string mobileNumber)
 		{
 			MergeID = mergeID;
 			MobileNumber = mobileNumber;
