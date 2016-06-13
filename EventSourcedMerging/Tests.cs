@@ -73,6 +73,7 @@ namespace EventSourcedMerging
 			var ms = new MergeService();
 			var mergeID = ms.Merge(_primary, _secondary);
 
+			_primary.PushEvent(new MobilePhoneChangedEvent("0744 4444 444"));
 			_store.Save("Users", _primary);
 
 			var user = ms.UndoMerge(_store, 1, mergeID);
@@ -81,8 +82,7 @@ namespace EventSourcedMerging
 
 			undo.ShouldSatisfyAllConditions(
 				() => undo.OfType<NameMergeRevertedEvent>().Single().Name.ShouldBe("Andy"),
-				() => undo.OfType<MobilePhoneMergeRevertedEvent>().Single().MobileNumber.ShouldBe("0798 1234 123"),
-				() => undo.Count.ShouldBe(2)
+				() => undo.Count.ShouldBe(1)
 			);
 		}
 	}

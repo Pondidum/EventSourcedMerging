@@ -29,30 +29,18 @@ namespace EventSourcedMerging.Services
 
 		public User UndoMerge(AggregateStore<int> store, int userID, int mergeID)
 		{
-			var previousWasMerge = false;
-			Func<DomainEvent<int>, EventTypes> segregator = e =>
-			{
-				var asMerge = e as IMergeEvent;
-				var isMergeEvent = asMerge != null && asMerge.MergeID == mergeID;
-
-				if (isMergeEvent == false)
-					return previousWasMerge == false
-					   ? EventTypes.Before
-					   : EventTypes.After;
-
-				previousWasMerge = true;
-				return EventTypes.Merge;
-			};
-
 			var user = User.Blank();
 			var events = store.Replay("Users", userID);
 			var mergeTransformations = new List<Transformation>();
 
-			Segreate(events, segregator,
-				before => user.LoadFromEvents(new[] { before }), //ew not efficient
-				merge => user.LoadFromEvents(new[] { MergeEvent(user, mergeTransformations, mergeID, merge) }),
-				after => user.LoadFromEvents(new[] { after }) //ew not efficient{ }
-			);
+			user.LoadFromEvents(events.Apply(e =>
+			{
+				var asMerge = e as IMergeEvent;
+				var isMergeEvent = asMerge != null && asMerge.MergeID == mergeID;
+
+				if (isMergeEvent)
+					MergeEvent(user, mergeTransformations, mergeID, e);
+			}));
 
 			mergeTransformations
 				.Where(t => t.HasChangedSinceMerge() == false)
@@ -62,7 +50,7 @@ namespace EventSourcedMerging.Services
 			return user;
 		}
 
-		private static DomainEvent<int> MergeEvent(User user, List<Transformation> transformations, int mergeID, DomainEvent<int> e)
+		private static void MergeEvent(User user, List<Transformation> transformations, int mergeID, DomainEvent<int> e)
 		{
 			var map = new Dictionary<Type, Transformation>();
 
@@ -80,11 +68,9 @@ namespace EventSourcedMerging.Services
 
 			Transformation delta;
 			if (map.TryGetValue(e.GetType(), out delta) == false)
-				return e;
+				return;
 
 			transformations.Add(delta);
-
-			return e;
 		}
 
 		private class Transformation
@@ -92,22 +78,5 @@ namespace EventSourcedMerging.Services
 			public Func<bool> HasChangedSinceMerge { get; set; }
 			public DomainEvent<int> UndoEvent { get; set; }
 		}
-
-		private void Segreate(IEnumerable<DomainEvent<int>> events, Func<DomainEvent<int>, EventTypes> choice, params Action<DomainEvent<int>>[] collections)
-		{
-			foreach (var domainEvent in events)
-			{
-				var index = (int)choice(domainEvent);
-				collections[index](domainEvent);
-			}
-		}
-
-		private enum EventTypes
-		{
-			Before,
-			Merge,
-			After
-		}
-
 	}
 }
